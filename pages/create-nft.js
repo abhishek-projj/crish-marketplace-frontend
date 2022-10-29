@@ -1,16 +1,17 @@
 import { useState } from 'react'
 import { ethers } from 'ethers'
-import { create as ipfsHttpClient } from 'ipfs-http-client'
+// import { create as ipfsHttpClient } from 'ipfs-http-client'
 import { useRouter } from 'next/router'
 import Web3Modal from 'web3modal'
 
+import { Web3Storage} from 'web3.storage';
+
 import Image from 'next/image'
 
-const client = ipfsHttpClient('https://ipfs.litnet.work/ipfs/bafybeifx7yeb55armcsxwwitkymga5xf53dxiarykms3ygqic223w5sk3m#x-ipfs-companion-no-redirect')
+const apiToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDJkNTk3ZkYzOGJFZjdCMzNmODRhOWJhOTU3M0Y2NjYwMTM5RDBBMDkiLCJpc3MiOiJ3ZWIzLXN0b3JhZ2UiLCJpYXQiOjE2NjcwMTk3NDM0MzcsIm5hbWUiOiJtYXJrZXRwbGFjZSJ9.VOs7pHuS1sAImbs0XVQ110UQmOAJzRHUWAlhd3GwPGg"
+const client = new Web3Storage({ token:apiToken })
 
 
-// const ipfsClient = require('ipfs-http-client')
-// const client = ipfsClient.create({ host: "ipfs.infura.io", port: 5001, protocol: "https" });
 
 import {
   marketplaceAddress
@@ -26,14 +27,9 @@ export default function CreateItem() {
   async function onChange(e) {
     const file = e.target.files[0]
     try {
-      const added = await client.add(
-        file,
-        {
-          progress: (prog) => console.log(`received: ${prog}`)
-        }
-      )
-      const url = `https://ipfs.infura.io/ipfs/${added.path}`
 
+      const rootCid = await client.put([file]);
+      const url = `https://ipfs.infura.io/ipfs/${rootCid}`
       console.log('====================================');
       console.log(url);
       console.log('====================================');
