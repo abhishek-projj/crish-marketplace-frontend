@@ -19,7 +19,6 @@ export default function ResellNFT() {
   const { image, price } = formInput
 
   useEffect(() => {
-
     console.log('====================================');
     console.log("marketplaceAddress");
     console.log(marketplaceAddress);
