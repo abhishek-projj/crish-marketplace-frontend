@@ -3,13 +3,17 @@ import { ethers } from 'ethers'
 // import { create as ipfsHttpClient } from 'ipfs-http-client'
 import { useRouter } from 'next/router'
 import Web3Modal from 'web3modal'
+import axios from "axios";
 
-import { Web3Storage} from 'web3.storage';
+
+// const client = ipfsHttpClient({
+//   host: 'api.web3.storage',
+//   port: 2053,
+//   protocol: 'https',
+// })
 
 import Image from 'next/image'
 
-const apiToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDJkNTk3ZkYzOGJFZjdCMzNmODRhOWJhOTU3M0Y2NjYwMTM5RDBBMDkiLCJpc3MiOiJ3ZWIzLXN0b3JhZ2UiLCJpYXQiOjE2NjcwMTk3NDM0MzcsIm5hbWUiOiJtYXJrZXRwbGFjZSJ9.VOs7pHuS1sAImbs0XVQ110UQmOAJzRHUWAlhd3GwPGg"
-const client = new Web3Storage({ token:apiToken })
 
 
 
@@ -21,24 +25,53 @@ import NFTMarketplace from '../src/abis/NFTMarketplace.json'
 
 export default function CreateItem() {
   const [fileUrl, setFileUrl] = useState(null)
-  const [formInput, updateFormInput] = useState({ price: '', name: '', description: '' })
-  const router = useRouter()
+  const [formInput, updateFormInput] = useState({ price: '', name: '', description: '' });
+
+  const [loadingDataToIpfs, setLoadingDataToIpfs] = useState(false);
+  const router = useRouter();
+
+
+  async function uploadImageToIpfs(file) {
+
+    setLoadingDataToIpfs(true)
+
+    try {
+      const url = 'https://api.web3.storage/upload';
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('fileName', file.name);
+      const config = {
+        headers: {
+          'accept': 'application/json',
+          'content-type': 'multipart/form-data',
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDJkNTk3ZkYzOGJFZjdCMzNmODRhOWJhOTU3M0Y2NjYwMTM5RDBBMDkiLCJpc3MiOiJ3ZWIzLXN0b3JhZ2UiLCJpYXQiOjE2NjcwMTk3NDM0MzcsIm5hbWUiOiJtYXJrZXRwbGFjZSJ9.VOs7pHuS1sAImbs0XVQ110UQmOAJzRHUWAlhd3GwPGg',
+        },
+      };
+      const uploadedData = await axios.post(url, formData, config);
+      const ipfsURL = `https://w3s.link/ipfs/${uploadedData.data.cid}`
+      console.log('====================================');
+      console.log(ipfsURL);
+      console.log('====================================');
+      setLoadingDataToIpfs(false)
+      return ipfsURL;
+    } catch (error) {
+      setLoadingDataToIpfs(false)
+
+      console.log('Error uploading file: ', error)
+    }
+
+  }
+
 
   async function onChange(e) {
-    const file = e.target.files[0]
-    try {
+    const file = e.target.files[0];
+    setFileUrl(null);
+    const urlimage = await uploadImageToIpfs(file);
+    setFileUrl(urlimage);
 
-      const rootCid = await client.put([file]);
-      const url = `https://ipfs.infura.io/ipfs/${rootCid}`
-      console.log('====================================');
-      console.log(url);
-      console.log('====================================');
-      setFileUrl(url)
-    } catch (error) {
-      console.log('Error uploading file: ', error)
-    }  
   }
   async function uploadToIPFS() {
+
     const { name, description, price } = formInput
     if (!name || !description || !price || !fileUrl) return
     /* first, upload to IPFS */
@@ -46,19 +79,15 @@ export default function CreateItem() {
       name, description, image: fileUrl
     })
 
+    const file = new Blob([data], { type: 'text/json' });
 
-    client.add(data)
-      .then(result => {
-        const url = `https://ipfs.infura.io/ipfs/${result.path}`
-        /* after file is uploaded to IPFS, return the URL to use it in the transaction */
-        return url
-      })
-      .catch(error =>
-        console.log('Error uploading file: ', error)
-        )
+    const urlimage = await uploadImageToIpfs(file);
+    return urlimage
+
   }
 
   async function listNFTForSale() {
+    if (loadingDataToIpfs) return;
     const url = await uploadToIPFS()
     // const url = "await uploadToIPFS()"
     const web3Modal = new Web3Modal()
@@ -77,14 +106,14 @@ export default function CreateItem() {
     console.log('====================================');
     let transaction = await contract.createToken(url, price, { value: listingPrice })
     await transaction.wait()
-   
+
     router.push('/')
   }
 
   return (
     <div className="flex justify-center">
       <div className="w-1/2 flex flex-col pb-12">
-        <input 
+        <input
           placeholder="Asset Name"
           className="mt-8 border rounded p-4"
           onChange={e => updateFormInput({ ...formInput, name: e.target.value })}
@@ -107,10 +136,19 @@ export default function CreateItem() {
         />
         {
           fileUrl && (
-            <Image alt=""   className="rounded mt-4" width="350" src={fileUrl} />
+            <Image alt="" className="rounded mt-4" height="350" width="350" src={fileUrl} />
           )
         }
-        <button onClick={listNFTForSale} className="font-bold mt-4 bg-pink-500 text-white rounded p-4 shadow-lg">
+        {
+
+          loadingDataToIpfs && (
+            fileUrl === null ?
+              <h6>uploading image to ipfs. please wait...</h6>
+              :
+              <h6>uploading Metadata to ipfs. please wait...</h6>)
+
+        }
+        <button disabled={loadingDataToIpfs} onClick={listNFTForSale} className="font-bold mt-4 bg-pink-500 text-white rounded p-4 shadow-lg">
           Create NFT
         </button>
       </div>
