@@ -21,7 +21,7 @@ export default function Home() {
   async function loadNFTs() {
     /* create a generic provider and query for unsold market items */
 
-    const provider = new ethers.providers.JsonRpcProvider("https://rpc-mumbai.matic.today");
+    const provider = new ethers.providers.JsonRpcProvider("https://polygon-mumbai.g.alchemy.com/v2/6-KhTv0YoiGpHBtcGDKr02eYNd07ujyf");
 
     const contract = new ethers.Contract(marketplaceAddress, NFTMarketplace.abi, provider)
     const data = await contract.fetchMarketItems()
@@ -72,7 +72,7 @@ export default function Home() {
           {
             nfts.map((nft, i) => (
               <div key={i} className="border shadow rounded-xl overflow-hidden">
-                <Image alt=""   src={nft.image} />
+                <Image alt=""  width={200} height={200} src={nft.image} />
                 <div className="p-4">
                   <p style={{ height: '64px' }} className="text-2xl font-semibold">{nft.name}</p>
                   <div style={{ height: '70px', overflow: 'hidden' }}>

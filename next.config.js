@@ -1,6 +1,6 @@
 module.exports = {
   reactStrictMode: true,
   images: {
-    domains: ['w3s.link','api.web3.storage'],
+    domains: ['w3s.link','api.web3.storage','infura-ipfs.io'],
   },
 }

@@ -18,10 +18,7 @@ export default function CreatorDashboard() {
     loadNFTs()
   }, [])
   async function loadNFTs() {
-    const web3Modal = new Web3Modal({
-      network: 'mainnet',
-      cacheProvider: true,
-    })
+    const web3Modal = new Web3Modal()
     const connection = await web3Modal.connect()
     const provider = new ethers.providers.Web3Provider(connection)
     const signer = provider.getSigner()
@@ -55,7 +52,7 @@ export default function CreatorDashboard() {
           {
             nfts.map((nft, i) => (
               <div key={i} className="border shadow rounded-xl overflow-hidden">
-                <Image alt=""   src={nft.image} className="rounded" />
+                <Image alt="" width={200} height={300}  src={nft.image} className="rounded" />
                 <div className="p-4 bg-black">
                   <p className="text-2xl font-bold text-white">Price - {nft.price} Eth</p>
                 </div>

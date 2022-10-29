@@ -1,21 +1,22 @@
 import { useState } from 'react'
 import { ethers } from 'ethers'
-// import { create as ipfsHttpClient } from 'ipfs-http-client'
+import { create as ipfsHttpClient } from 'ipfs-http-client'
 import { useRouter } from 'next/router'
 import Web3Modal from 'web3modal'
-import axios from "axios";
-
-
-// const client = ipfsHttpClient({
-//   host: 'api.web3.storage',
-//   port: 2053,
-//   protocol: 'https',
-// })
-
 import Image from 'next/image'
 
 
-
+const projectId = '2GoOI2SokjsSFEBaUpKTrj5hikP';
+const projectSecret = 'a5fefc462f1db5ec3fb942f99a7c8f1e';
+const auth = 'Basic ' + Buffer.from(projectId + ':' + projectSecret).toString('base64');
+const client = ipfsHttpClient({
+  host: 'ipfs.infura.io',
+  port: 5001,
+  protocol: 'https',
+  headers: {
+    authorization: auth,
+  },
+})
 
 import {
   marketplaceAddress
@@ -31,35 +32,45 @@ export default function CreateItem() {
   const router = useRouter();
 
 
+  // async function uploadImageToIpfs(file) {
+  //   setLoadingDataToIpfs(true)
+  //   try {
+  //     const url = 'https://api.web3.storage/upload';
+  //     const formData = new FormData();
+  //     formData.append('file', file);
+  //     formData.append('fileName', file.name);
+  //     const config = {
+  //       headers: {
+  //         'accept': 'application/json',
+  //         'content-type': 'multipart/form-data',
+  //         'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDJkNTk3ZkYzOGJFZjdCMzNmODRhOWJhOTU3M0Y2NjYwMTM5RDBBMDkiLCJpc3MiOiJ3ZWIzLXN0b3JhZ2UiLCJpYXQiOjE2NjcwMTk3NDM0MzcsIm5hbWUiOiJtYXJrZXRwbGFjZSJ9.VOs7pHuS1sAImbs0XVQ110UQmOAJzRHUWAlhd3GwPGg',
+  //       },
+  //     };
+  //     const uploadedData = await axios.post(url, formData, config);
+  //     const ipfsURL = `https://w3s.link/ipfs/${uploadedData.data.cid}`
+  //     console.log('====================================');
+  //     console.log(ipfsURL);
+  //     console.log('====================================');
+  //     setLoadingDataToIpfs(false)
+  //     return ipfsURL;
+  //   } catch (error) {
+  //     setLoadingDataToIpfs(false)
+
+  //     console.log('Error uploading file: ', error)
+  //   }
+
+  // }
+
+
   async function uploadImageToIpfs(file) {
-
     setLoadingDataToIpfs(true)
+    const added = await client.add(file);
+    setLoadingDataToIpfs(false)
 
-    try {
-      const url = 'https://api.web3.storage/upload';
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('fileName', file.name);
-      const config = {
-        headers: {
-          'accept': 'application/json',
-          'content-type': 'multipart/form-data',
-          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDJkNTk3ZkYzOGJFZjdCMzNmODRhOWJhOTU3M0Y2NjYwMTM5RDBBMDkiLCJpc3MiOiJ3ZWIzLXN0b3JhZ2UiLCJpYXQiOjE2NjcwMTk3NDM0MzcsIm5hbWUiOiJtYXJrZXRwbGFjZSJ9.VOs7pHuS1sAImbs0XVQ110UQmOAJzRHUWAlhd3GwPGg',
-        },
-      };
-      const uploadedData = await axios.post(url, formData, config);
-      const ipfsURL = `https://w3s.link/ipfs/${uploadedData.data.cid}`
-      console.log('====================================');
-      console.log(ipfsURL);
-      console.log('====================================');
-      setLoadingDataToIpfs(false)
-      return ipfsURL;
-    } catch (error) {
-      setLoadingDataToIpfs(false)
-
-      console.log('Error uploading file: ', error)
-    }
-
+    console.log('====================================');
+    console.log(added);
+    console.log('====================================');
+    return `https://infura-ipfs.io/ipfs/${added.path}`;
   }
 
 
@@ -68,7 +79,6 @@ export default function CreateItem() {
     setFileUrl(null);
     const urlimage = await uploadImageToIpfs(file);
     setFileUrl(urlimage);
-
   }
   async function uploadToIPFS() {
 
@@ -80,10 +90,8 @@ export default function CreateItem() {
     })
 
     const file = new Blob([data], { type: 'text/json' });
-
     const urlimage = await uploadImageToIpfs(file);
     return urlimage
-
   }
 
   async function listNFTForSale() {
@@ -136,9 +144,9 @@ export default function CreateItem() {
         />
         {
           fileUrl && (
-            <Image alt="" className="rounded mt-4" height="350" width="350" src={fileUrl} />
-          )
-        }
+            <Image alt="" className="rounded mt-4" width={200} height={200} src={fileUrl} />
+            )
+          }
         {
 
           loadingDataToIpfs && (
